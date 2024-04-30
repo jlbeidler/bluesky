@@ -26,6 +26,38 @@ BLUESKYKML_SPECIES_LIST = [s.upper() for s in blueskykml_fires.FireData.emission
 if 'NOX' in BLUESKYKML_SPECIES_LIST:
     BLUESKYKML_SPECIES_LIST.remove('NOX')
     BLUESKYKML_SPECIES_LIST.append('NOx')
+hap_list = ['100414','100425','106990','108883','110543','123386','50000','540841','71432','75070','98828','1330207']
+AG_HAPS_SPECIES_LIST = [f'hap_{poll}' for poll in hap_list]
+
+AG_SCCS = {'1': '2801500150', '2': '2801500262', '3': '2801500141', '4': '2801500160',
+  '6': '2801500171', '7': '2801500220', '8': '2801500250', '9': '2801500142', '12': '2801500000',
+  '13': '2801500151', '14': '2801500263', '15': '2801500161', '16': '2801500152', 
+  '17': '2801500264', '25': '2811020002', '26': '2810001001'}
+
+CDL_CROP_MAP = {'1': '1', '12': '1', '13': '1', '226': '1', '237': '1', # Corn
+  '22': '2', '23': '2', '24': '2', '230': '2', '234': '2', '236': '2', # Wheat
+  '5': '3', '52': '3', '240': '3', '254': '3', # Soy
+  '2': '4', '232': '4', # Cotton
+  '61': '6', # Fallow
+  '3': '7', # Rice
+  '45': '8', # Sugarcane
+  '225': '13', # Winterwheat/Corn
+  '238': '14', # Winterwheat/Cotton
+  '239': '15', # Soybean/Cotton
+  '241': '16', # Corn/Soy
+  '26': '17', # Winterwheat/Soy
+  '37': '25', '176': '25', '256': '25' # Grass/Pasture
+} 
+
+FCCS_CROP_MAP = {'1281': '25', '131': '25', '133': '25', '175': '25', '176': '25', '203': '25', 
+  '213': '25', '236': '25', '280': '25', '302': '25', '315': '25', '318': '25', '336': '25', 
+  '41': '25', '415': '25', '417': '25', '420': '25', '435': '25', '436': '25', '437': '25', 
+  '442': '25', '443': '25', '445': '25', '453': '25', '506': '25', '514': '25', '519': '25', 
+  '530': '25', '531': '25', '532': '25', '533': '25', '57': '25', '65': '25', '66': '25', 
+  '1261': '6', # Fallow
+  '1203': '7', # Rice
+  '1223': '2' # Wheat
+ } 
 
 ##
 ## Functions for extracting fire *location * information to write to csv files
@@ -52,6 +84,33 @@ def _pick_representative_fuelbed(fire, loc):
         fuelbeds = sorted(fuelbeds,
             key=lambda fb: fb.get('pct', 0.0), reverse=True)
         return fuelbeds[0]['fccs_id']
+
+def _pick_representative_scc(fire, loc):
+    if fire.is_wildfire:
+        return '2810001000'
+    elif fire.is_rx:
+        return '2811015000'
+    elif fire.type == 'ag': 
+        fuelbeds = [f for f in loc.get('fuelbeds', [])
+            if hasattr(f.get('pct', 0.0), 'real') and f.get('fccs_id')]
+        if fuelbeds:
+            fuelbeds = sorted(fuelbeds,
+                key=lambda fb: fb.get('pct', 0.0), reverse=True)
+            # Integrate the updated mapping from the crop file
+            fccs = fuelbeds[0]['fccs_id']
+            if int(fccs) > 9000:
+                try:
+                    fccs = CDL_CROP_MAP[str(int(fccs)-9000)]
+                except KeyError:
+                    fccs = '12'
+            else:
+                try:
+                    fccs = FCCS_CROP_MAP[str(int(fccs))]
+                except KeyError:
+                    fccs = '12'
+            return AG_SCCS[fccs]
+    else:
+        return ''.zfill(10)
 
 def _get_fuelbed_fractions(fire, loc):
     fuelbeds = [f for f in loc.get('fuelbeds', [])
@@ -122,6 +181,7 @@ def _get_location_value(key, is_float):
             return float(val) if is_float else val
     return f
 
+BLUESKYKML_SPECIES_LIST = BLUESKYKML_SPECIES_LIST + AG_HAPS_SPECIES_LIST
 # Fire locations csv columns from BSF:
 #  id,event_id,latitude,longitude,type,area,date_time,elevation,slope,
 #  state,county,country,fips,scc,fuel_1hr,fuel_10hr,fuel_100hr,fuel_1khr,
@@ -143,6 +203,7 @@ FIRE_LOCATIONS_CSV_FIELDS = (
         ('utc_offset', lambda f, loc: loc.get('utc_offset')),
         ('source', lambda f, loc: loc.get('source')),
         ('type', _get_fire_type_str),
+        ('scc', _pick_representative_scc),
         ('date_time', lambda f, loc: format_date_time(loc['start'], loc.get('utc_offset'), 'firescsvs')),
         ('event_name', lambda f, loc: f.get('event_of', {}).get('name')),
         ('fccs_number', _pick_representative_fuelbed),

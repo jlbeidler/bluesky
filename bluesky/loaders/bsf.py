@@ -48,6 +48,7 @@ LOCATION_FIELDS = [
     ("state", "state", lambda val: val),
     ("county", "county", lambda val: val),
     ("country", "country", lambda val: val),
+    ("cover_code", "fccs_id", lambda val: val),
     # required float fields
     ("latitude", "lat", lambda val: float(val)),
     ("longitude", "lng", lambda val: float(val)),
