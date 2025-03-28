@@ -16,6 +16,7 @@ from emitcalc.calculator import EmissionsCalculator
 from eflookup import __version__ as eflookup_version
 from eflookup.fccs2ef.lookup import Fccs2Ef, Fccs2SeraEf
 from eflookup.fepsef import FepsEFLookup
+from eflookup.crops2ef import Crops2Ef
 from pyairfire import osutils
 
 from bluesky import datautils, datetimeutils
@@ -122,6 +123,46 @@ class EmissionsBase(object, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def _run_on_fire(self, fire):
         pass
+
+##
+## Crops
+##
+
+class Crops(EmissionsBase):
+
+    def __init__(self, fire_failure_handler):
+        super(Crops, self).__init__(fire_failure_handler)
+
+    CONVERSION_FACTOR = 0.0005 # 1.0 ton / 2000.0 lbs
+
+    def _run_on_fire(self, fire):
+        if 'activity' not in fire:
+            raise ValueError(
+                "Missing activity data required for computing emissions")
+
+        for aa in fire.active_areas:
+            for loc in aa.locations:
+                if 'fuelbeds' not in loc:
+                    raise ValueError(
+                        "Missing fuelbed data required for computing emissions")
+                for fb in loc['fuelbeds']:
+                    if 'consumption' not in fb:
+                        raise ValueError(
+                            "Missing consumption data required for computing emissions")
+                    if 'fccs_id' not in fb:
+                        raise ValueError(
+                            "Missing FCCS Id required for computing emissions")
+                    lookup = self._get_lookup_object(fire, fb)
+                    calculator = EmissionsCalculator(lookup, species=self.species)
+                    _calculate(calculator, fb, self.include_emissions_details,
+                        self.include_emissions_factors)
+                    datautils.multiply_nested_data(fb['emissions'], self.CONVERSION_FACTOR)
+                    if self.include_emissions_details:
+                        datautils.multiply_nested_data(fb['emissions_details'], self.CONVERSION_FACTOR)
+
+    def _get_lookup_object(self, fire, fuelbed):
+        return Crops2Ef(fuelbed['fccs_id'])
+
 ##
 ## FEPS for Canadian Smartfire
 ##

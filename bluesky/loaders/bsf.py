@@ -48,6 +48,7 @@ LOCATION_FIELDS = [
     ("state", "state", lambda val: val),
     ("county", "county", lambda val: val),
     ("country", "country", lambda val: val),
+    ("cover_code", "fccs_id", lambda val: val),
     # required float fields
     ("latitude", "lat", lambda val: float(val)),
     ("longitude", "lng", lambda val: float(val)),
@@ -66,6 +67,7 @@ LOCATION_FIELDS = [
     ("moisture_1khr", "moisture_1khr", get_optional_float),
     ("moisture_live", "moisture_live", get_optional_float),
     ("moisture_duff", "moisture_duff", get_optional_float),
+    ("moisture_litter", "moisture_litter", get_optional_float),
     ("min_wind", "min_wind", get_optional_float),
     ("max_wind", "max_wind", get_optional_float),
     ("min_wind_aloft", "min_wind_aloft", get_optional_float),
@@ -98,6 +100,7 @@ class CsvFileLoader(BaseCsvFileLoader):
         super().__init__(**config)
         self._omit_nulls = config.get('omit_nulls')
         self._timeprofile_file = config.get('timeprofile_file')
+        self._load_moisture = config.get('load_moisture')
         self._load_consumption = config.get('load_consumption')
         self._load_emissions = config.get('load_emissions')
         self._set_area_multiplier(config)
@@ -135,6 +138,7 @@ class CsvFileLoader(BaseCsvFileLoader):
         fires = {}
         self._consumption_values = {}
         self._emissions_values = {}
+        self._moisture_values = {}
 
         for row in data:
             with skip_failures(self._skip_failures):
@@ -223,16 +227,28 @@ class CsvFileLoader(BaseCsvFileLoader):
             fire["event_of"]["id"] = row["event_id"]
         if row.get("event_url"):
             fire["event_of"]["url"] = row["event_url"]
+        if row.get("event_name"):
+            fire["event_of"]["name"] = row["event_name"]
 
         if row.get("type"):
             fire["type"] = row["type"].lower()
 
         self._process_consumption_values(row, fire, sp)
         self._process_emissions_values(row, fire, sp)
+        self._process_moisture_values(row, fire, sp)
 
         # TODO: other marshaling
 
         return fire
+
+    def _process_moisture_values(self, row, fire, sp):
+
+        fm_map = {'moisture_1khr': '1000_hr', 'moisture_duff': 'duff', 'moisture_litter': 'litter'} 
+        if self._load_moisture:
+            self._moisture_values[fire['id']] = {}
+            for col, f in fm_map.items():
+                if row.get(col) not in (None, ''):
+                    self._moisture_values[fire['id']][f] = get_optional_float(row.get(col))
 
     def _process_consumption_values(self, row, fire, sp):
 
@@ -319,6 +335,11 @@ class CsvFileLoader(BaseCsvFileLoader):
                 })
                 if event_id and (start in self._timeprofile[event_id]):
                     fire['activity'][-1]["active_areas"][0]["timeprofile"] = self._timeprofile[event_id][start]
+
+        # For fuel moisture. Assumes same FM for entire fire location.
+        if fire['id'] in self._moisture_values:
+            sp = fire['activity'][-1]['active_areas'][0]['specified_points'][-1]
+            sp['fuelmoisture'] = self._moisture_values[fire['id']]    
 
         # Again this is for the Canadian addition. Assumes one location per fire.
         if (fire["id"] in self._consumption_values
