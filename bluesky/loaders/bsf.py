@@ -136,6 +136,7 @@ class CsvFileLoader(BaseCsvFileLoader):
         self._load_timeprofile_file()
 
         fires = {}
+        self._fuelbeds = {}
         self._consumption_values = {}
         self._emissions_values = {}
         self._moisture_values = {}
@@ -233,6 +234,9 @@ class CsvFileLoader(BaseCsvFileLoader):
         if row.get("type"):
             fire["type"] = row["type"].lower()
 
+        if sp['fccs_id'] not in (None, ''):
+            self._fuelbeds[fire['id']] = sp['fccs_id']
+
         self._process_consumption_values(row, fire, sp)
         self._process_emissions_values(row, fire, sp)
         self._process_moisture_values(row, fire, sp)
@@ -242,7 +246,6 @@ class CsvFileLoader(BaseCsvFileLoader):
         return fire
 
     def _process_moisture_values(self, row, fire, sp):
-
         fm_map = {'moisture_1khr': '1000_hr', 'moisture_duff': 'duff', 'moisture_litter': 'litter'} 
         if self._load_moisture:
             self._moisture_values[fire['id']] = {}
@@ -335,6 +338,13 @@ class CsvFileLoader(BaseCsvFileLoader):
                 })
                 if event_id and (start in self._timeprofile[event_id]):
                     fire['activity'][-1]["active_areas"][0]["timeprofile"] = self._timeprofile[event_id][start]
+
+        # Set the FCCS ID from the CSV file for the entire location
+        if fire['id'] in self._fuelbeds:
+            sp = fire['activity'][-1]['active_areas'][0]['specified_points'][-1]
+            sp['fuelbeds'] = [{}]
+            sp['fuelbeds'][0]['fccs_id'] = self._fuelbeds[fire['id']]
+            sp['fuelbeds'][0]['pct'] = 100
 
         # For fuel moisture. Assumes same FM for entire fire location.
         if fire['id'] in self._moisture_values:
