@@ -72,18 +72,6 @@ class Fire(dict):
         for i in range(len(self.get('activity', []))):
             self['activity'][i] = ActivityCollection(self['activity'][i])
 
-        # If fuelbeds are defined, make sure fccs_id's are strings.
-        # Note that we aren't using 'self.locations' because it would trigger
-        # validations that shouldn't be run now
-        for a in self.get('activity', []):
-            for aa in a.get('active_areas', []):
-                locs = aa.get('specified_points', []) + (
-                    [aa['perimeter']] if aa.get('perimeter') else [])
-                for loc in locs:
-                    for fb in loc.get('fuelbeds', []):
-                        if fb.get('fccs_id'):
-                            fb['fccs_id'] = str(fb['fccs_id'])
-
     ## Properties
 
     # @property
@@ -170,7 +158,10 @@ class Fire(dict):
         'wildfire': 'wildfire',
         'wf': 'wildfire',
         'rx':'rx',
-        'unknown': 'unknown'
+        'unknown': 'unknown',
+        'ag': 'ag',
+        'pb': 'pb',
+        'ap': 'ap'
     }
     INVALID_TYPE_MSG = "Invalid fire 'type': {}"
 
@@ -569,7 +560,7 @@ class FiresManager():
             # If there was a failure
             raise BlueSkyModuleError
 
-        self.log_status('Good', 'Main', 'Finish', runtime=self.runtime, counts=self.counts)
+        self.log_status('Good', 'Main', 'Finish', runtime=self.runtime)
 
     ## Filtering Fires
 
