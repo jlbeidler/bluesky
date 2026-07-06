@@ -134,7 +134,7 @@ _DEFAULTS = {
     "consumption": {
         "model": "consume",
         "fuel_loadings": {},
-        "fccss_fuel_loadings": "",
+        "fccs_loadings_filename": "",
         "scale_with_estimated_fuelload": False,
         "scale_with_estimated_consumption": False,
         "summarize_fuel_loadings": False,

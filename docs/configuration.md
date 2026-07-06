@@ -163,6 +163,7 @@ The following settings apply to filtering on any field (other than 'area') in th
 ### consumption
 
  - ***'config' > 'consumption' > 'fuel_loadings'*** -- *optional* -- custom, fuelbed-specific fuel loadings; loadings values are in tons per acre
+ - ***'config' > 'consumption' > 'fuel_loadings_filename'*** -- *optional* -- custom, fuelbed-specific fuel loadings in a CSV; loadings values are in tons per acre
  - ***'config' > 'consumption' > 'scale_with_estimated_fuelload'*** -- *optional* -- If set to true and if the estimated fuel load per acre is defined for the location (field `input_est_fuelload_tpa` in specified point or perimeter), then the modeled fuel load and consumption values are all scaled by `input_est_fuelload_tpa \ <modeled fuel load per acre for that location>`
  - ***'config' > 'consumption' > 'scale_with_estimated_consumption'*** -- *optional* -- If set to true and if the estimated consumption per acre is defined for the location (field `input_est_consumption_tpa` in specified point or perimeter), then the modeled consumption values are all scaled by `input_est_consumption_tpa \ <modeled consumption per acre for that location>`
  - ***'config' > 'consumption' > 'summarize_fuel_loadings'*** -- *optional* -- default false; whether or not to summarize/aggregate fuel loadings across fuelbeds, locations, etc.
@@ -227,6 +228,7 @@ They also define what synonyms to recognize, if any, for each field.
 ### emissions
 
  - ***'config' > 'emissions' > 'model'*** -- *optional* -- emissions model; 'prichard-oneill' (which replaced 'urbanski'), 'feps', or 'consume'; default 'prichard-oneill'
+ - ***'config' > 'emissions' > 'fuelbed_region'*** -- *optional* -- region associated with the fuelbeds, 'global' for lookup of globalFCCS fuelbeds when using 'prichard-oneill'; default is "" where the FCCS codes are used without a prefix
  - ***'config' > 'emissions' > 'piles_model'*** -- *optional* -- emissions model to use for piles; 'prichard-oneill' (which replaced 'urbanski'), 'feps', 'consume', or 'piles'; defaults to what 'model' is set to
  - ***'config' > 'emissions' > 'species'*** -- *optional* -- list of species to compute emissions levels for
  - ***'config' > 'emissions' > 'include_emissions_details'*** -- *optional* -- whether or not to include emissions levels by fuel category; default: false

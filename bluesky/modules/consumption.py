@@ -28,7 +28,7 @@ __all__ = [
 __version__ = "0.1.0"
 
 
-FCCS_FUEL_LOADINGS = Config().get('consumption', 'fccs_fuel_loadings')
+FCCS_FUEL_LOADINGS = Config().get('consumption', 'fccs_loadings_filename')
 SUMMARIZE_FUEL_LOADINGS = Config().get('consumption', 'summarize_fuel_loadings')
 LOADINGS_KEY_MATCHER = re.compile('.*_loading')
 
