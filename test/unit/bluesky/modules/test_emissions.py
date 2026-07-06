@@ -638,6 +638,14 @@ class BaseEmissionsTest():
         self.fires_with_piles_only =copy.deepcopy(FIRES_WITH_PILES_ONLY)
         self.fires_with_piles_only_2acres =copy.deepcopy(FIRES_WITH_PILES_ONLY_2ACRES)
 
+    def _run_fires(self, emissions_obj, fires):
+        for fire in fires:
+            with fire_failure_manager(fire):
+                for aa in fire.active_areas:
+                    for loc in aa.locations:
+                        emissions_obj.run_on_location(fire, aa, loc)
+
+
     def _check_emissions(self, expected, actual):
         assert set(expected.keys()) == set(actual.keys())
         for p in expected:
@@ -717,7 +725,7 @@ class TestFepsEmissions(BaseEmissionsTest):
         Config().set("feps", 'emissions', "model")
         Config().set(False, 'emissions', "include_emissions_details")
 
-        emissions.Feps(fire_failure_manager).run(self.fires)
+        self._run_fires(emissions.Feps(), self.fires)
 
         assert self.fires[0]['error'] == (
             'Missing fuelbed data required for computing emissions')
@@ -729,7 +737,7 @@ class TestFepsEmissions(BaseEmissionsTest):
     def test_with_details(self, reset_config):
         Config().set("feps", 'emissions', "model")
         Config().set(True, 'emissions', "include_emissions_details")
-        emissions.Feps(fire_failure_manager).run(self.fires)
+        self._run_fires(emissions.Feps(), self.fires)
 
         assert self.fires[0]['error'] == (
             'Missing fuelbed data required for computing emissions')
@@ -742,7 +750,7 @@ class TestFepsEmissions(BaseEmissionsTest):
         Config().set("feps", 'emissions', "model")
         Config().set(False, 'emissions', "include_emissions_details")
         Config().set(['PM2.5', 'PM10'], 'emissions', "species")
-        emissions.Feps(fire_failure_manager).run(self.fires)
+        self._run_fires(emissions.Feps(), self.fires)
 
         assert self.fires[0]['error'] == (
             'Missing fuelbed data required for computing emissions')
@@ -755,7 +763,7 @@ class TestFepsEmissions(BaseEmissionsTest):
         Config().set("feps", 'emissions', "model")
         Config().set(True, 'emissions', "include_emissions_details")
         Config().set(['PM2.5', 'PM10'], 'emissions', "species")
-        emissions.Feps(fire_failure_manager).run(self.fires)
+        self._run_fires(emissions.Feps(), self.fires)
 
         assert self.fires[0]['error'] == (
             'Missing fuelbed data required for computing emissions')
@@ -811,87 +819,87 @@ class TestPrichardOneillEmissions(BaseEmissionsTest):
 
     EXPECTED_FIRE52_PILE_ONLY_EMISSIONS = {
         'flaming': {
-            'CO': [77.63721094080002],
+            'CO': [77.63721094080002/47.2],
             'SO2': [0.0],
             'NOx': [0.0],
             'NH3': [0.0],
-            'CH4': [4.8357396864],
-            'PM2.5': [19.903196880000007],
-            'PM10': [22.851818640000005],
-            'CO2': [5055.765842131201]
+            'CH4': [4.8357396864/47.2],
+            'PM2.5': [19.903196880000007/47.2],
+            'PM10': [22.851818640000005/47.2],
+            'CO2': [5055.765842131201/47.2]
         },
         'smoldering': {
-            'CO': [41.18698059120001],
+            'CO': [41.18698059120001/47.2],
             'SO2': [0.0],
             'NOx': [0.0],
             'NH3': [0.0],
-            'CH4': [3.4846390728000003],
-            'PM2.5': [4.264970760000001],
-            'PM10': [4.89681828],
-            'CO2': [976.1665075488003]
+            'CH4': [3.4846390728000003/47.2],
+            'PM2.5': [4.264970760000001/47.2],
+            'PM10': [4.89681828/47.2],
+            'CO2': [976.1665075488003/47.2]
         },
         'residual': {
-            'CO': [41.18698059120001],
+            'CO': [41.18698059120001/47.2],
             'SO2': [0.0],
             'NOx': [0.0],
             'NH3': [0.0],
-            'CH4': [3.4846390728000003],
-            'PM2.5': [4.264970760000001],
-            'PM10': [4.89681828],
-            'CO2': [976.1665075488003]
+            'CH4': [3.4846390728000003/47.2],
+            'PM2.5': [4.264970760000001/47.2],
+            'PM10': [4.89681828/47.2],
+            'CO2': [976.1665075488003/47.2]
         },
         'total': {
-            'CO': [160.01117212320003],
+            'CO': [160.01117212320003/47.2],
             'SO2': [0.0],
             'NOx': [0.0],
             'NH3': [0.0],
-            'CH4': [11.805017831999999],
-            'PM2.5': [28.433138400000008],
-            'PM10': [32.64545520000001],
-            'CO2': [7008.098857228801]
+            'CH4': [11.805017831999999/47.2],
+            'PM2.5': [28.433138400000008/47.2],
+            'PM10': [32.64545520000001/47.2],
+            'CO2': [7008.098857228801/47.2]
         }
     }
 
     EXPECTED_FIRE_WITH_PILE_EMISSIONS = {
         'flaming': {
-            'CO': [77.19041562310301],
+            'CO': [28.02388002310301],
             'SO2': [0.39522236726530535],
             'NOx': [0.5140925],
             'NH3': [0.32721800000000006],
-            'CH4': [4.3593401448889],
-            'PM2.5': [22.743828644191552],
-            'PM10': [28.370165999999998],
-            'CO2': [3761.172682929199]
+            'CH4': [1.296935344888901],
+            'PM2.5': [4.3351656441915525],
+            'PM10': [6.662571000000001],
+            'CO2': [559.4284645291991]
         },
         'smoldering': {
-            'CO': [153.3612847486871],
+            'CO': [127.2781588486871],
             'SO2': [1.5593568283333363],
             'NOx': [0.97118925],
             'NH3': [1.6569200000000002],
-            'CH4': [9.098727903487534],
-            'PM2.5': [21.775237735337],
-            'PM10': [23.413155000000003],
-            'CO2': [2057.005141196193]
+            'CH4': [6.891955803487535],
+            'PM2.5': [17.830524235337002],
+            'PM10': [18.761527500000003],
+            'CO2': [1438.8128495961935]
         },
         'residual': {
-            'CO': [26.6111244],
+            'CO': [0.5279985],
             'SO2': [0.0],
             'NOx': [0.0],
             'NH3': [0.0],
-            'CH4': [2.2514435999999995],
-            'PM2.5': [4.024566],
-            'PM10': [4.7457899999999995],
-            'CO2': [630.7063056]
+            'CH4': [0.044671499999999996],
+            'PM2.5': [0.0798525],
+            'PM10': [0.0941625],
+            'CO2': [12.514014]
         },
         'total': {
-            'CO': [257.16282477179016],
+            'CO': [155.83003737179013],
             'SO2': [1.9545791955986418],
             'NOx': [1.4852817500000002],
             'NH3': [1.9841380000000002],
-            'CH4': [15.709511648376434],
-            'PM2.5': [48.54363237952855],
-            'PM10': [56.529111],
-            'CO2': [6448.884129725391]
+            'CH4': [8.233562648376434],
+            'PM2.5': [22.245542379528555],
+            'PM10': [25.518261000000003],
+            'CO2': [2010.7553281253925]
         }
     }
 
@@ -904,7 +912,7 @@ class TestPrichardOneillEmissions(BaseEmissionsTest):
         Config().set("prichard-oneill", 'emissions', "model")
         Config().set(False, 'emissions', "include_emissions_details")
         Config().set(self.SPECIES, 'emissions', "species")
-        emissions.PrichardOneill(fire_failure_manager).run(self.fires)
+        self._run_fires(emissions.PrichardOneill(), self.fires)
 
         assert self.fires[0]['error'] == (
             'Missing fuelbed data required for computing emissions')
@@ -917,7 +925,7 @@ class TestPrichardOneillEmissions(BaseEmissionsTest):
         Config().set("prichard-oneill", 'emissions', "model")
         Config().set(True, 'emissions', "include_emissions_details")
         Config().set(self.SPECIES, 'emissions', "species")
-        emissions.PrichardOneill(fire_failure_manager).run(self.fires)
+        self._run_fires(emissions.PrichardOneill(), self.fires)
 
         assert self.fires[0]['error'] == (
             'Missing fuelbed data required for computing emissions')
@@ -931,17 +939,16 @@ class TestPrichardOneillEmissions(BaseEmissionsTest):
         Config().set(True, 'emissions', "include_emissions_details")
         Config().set(self.SPECIES, 'emissions', "species")
         Config().merge(CONFIG_FOR_PILE_ONLY_TESTS_2ACRES)
-        emissions.PrichardOneill(fire_failure_manager).run(self.fires_with_piles_only_2acres)
+        self._run_fires(emissions.PrichardOneill(), self.fires_with_piles_only_2acres)
 
         ed1 = self.fires_with_piles_only_2acres[0]['activity'][0]['active_areas'][0]['specified_points'][0]['fuelbeds'][0]['emissions_details']
         em1 = self.fires_with_piles_only_2acres[0]['activity'][0]['active_areas'][0]['specified_points'][0]['fuelbeds'][0]['emissions']
 
-        assert ed1['summary']['total']['flaming']['PM2.5'][0] == 0.44910176220000003
-        assert ed1['summary']['total']['total']['PM2.5'][0] == 0.6415739460000001
+        assert ed1['summary']['total']['flaming']['PM2.5'][0] == 0.44910176220000003 / 2
+        assert ed1['summary']['total']['total']['PM2.5'][0] == 0.6415739460000001 / 2
 
-        assert em1['flaming']['PM2.5'][0] == 0.44910176220000003
-        assert em1['total']['PM2.5'][0] == 0.6415739460000001
-
+        assert em1['flaming']['PM2.5'][0] == 0.44910176220000003 / 2
+        assert em1['total']['PM2.5'][0] == 0.6415739460000001 /2
 
 
     def test_pile_only(self, reset_config):
@@ -949,7 +956,7 @@ class TestPrichardOneillEmissions(BaseEmissionsTest):
         Config().set(True, 'emissions', "include_emissions_details")
         Config().set(self.SPECIES, 'emissions', "species")
         Config().merge(CONFIG_FOR_PILE_ONLY_TESTS)
-        emissions.PrichardOneill(fire_failure_manager).run(self.fires_with_piles_only)
+        self._run_fires(emissions.PrichardOneill(), self.fires_with_piles_only)
 
         assert 'emissions_details' in self.fires_with_piles_only[0]['activity'][0]['active_areas'][0]['specified_points'][0]['fuelbeds'][0]
         assert 'emissions_details' in self.fires_with_piles_only[1]['activity'][0]['active_areas'][0]['specified_points'][0]['fuelbeds'][0]
@@ -1008,14 +1015,12 @@ class TestPrichardOneillEmissions(BaseEmissionsTest):
         # double the area of the first fire... see if emissions double... this may not be valid test...
         self.fires_with_piles_only[0]['activity'][0]['active_areas'][0]['specified_points'][0]['area'] *= 2
 #        self.fires_with_piles_only[0]['activity'][0]['active_areas'][0]['locations'][0]['area'] *= 2   # ?this is the important area
-        emissions.PrichardOneill(fire_failure_manager).run(self.fires_with_piles_only)
+        self._run_fires(emissions.PrichardOneill(), self.fires_with_piles_only)
         ed1 = self.fires_with_piles_only[0]['activity'][0]['active_areas'][0]['specified_points'][0]['fuelbeds'][0]['emissions_details']
         em1 = self.fires_with_piles_only[0]['activity'][0]['active_areas'][0]['specified_points'][0]['fuelbeds'][0]['emissions']
 
-        assert ed1['summary']['total']['flaming']['PM2.5'][0] == 2 * self.EXPECTED_FIRE52_PILE_ONLY_EMISSIONS['flaming']['PM2.5'][0]
-        assert em1['flaming']['PM2.5'][0] == 2 * self.EXPECTED_FIRE52_PILE_ONLY_EMISSIONS['flaming']['PM2.5'][0]
-
-
+        assert_approx_equal(ed1['summary']['total']['flaming']['PM2.5'][0], self.EXPECTED_FIRE52_PILE_ONLY_EMISSIONS['flaming']['PM2.5'][0])
+        assert_approx_equal(em1['flaming']['PM2.5'][0], self.EXPECTED_FIRE52_PILE_ONLY_EMISSIONS['flaming']['PM2.5'][0])
 
 
     def test_fb_with_pile_loadings(self, reset_config):
@@ -1023,7 +1028,7 @@ class TestPrichardOneillEmissions(BaseEmissionsTest):
         Config().set(True, 'emissions', "include_emissions_details")
         Config().set(self.SPECIES, 'emissions', "species")
         Config().merge(CONFIG_FOR_FB_WITH_PILE_TESTS)
-        emissions.PrichardOneill(fire_failure_manager).run(self.fires_with_piles)
+        self._run_fires(emissions.PrichardOneill(), self.fires_with_piles)
 
         assert 'emissions_details' in self.fires_with_piles[0]['activity'][0]['active_areas'][0]['specified_points'][0]['fuelbeds'][0]
         ed = self.fires_with_piles[0]['activity'][0]['active_areas'][0]['specified_points'][0]['fuelbeds'][0]['emissions_details']
@@ -1136,7 +1141,7 @@ class TestConsumeEmissions(BaseEmissionsTest):
         Config().set(False, 'emissions', "include_emissions_details")
         set_old_consume_defaults()
 
-        emissions.Consume(fire_failure_manager).run(self.fires)
+        self._run_fires(emissions.Consume(), self.fires)
 
         assert self.fires[0]['error'] == (
             'Missing fuelbed data required for computing emissions')
@@ -1150,7 +1155,7 @@ class TestConsumeEmissions(BaseEmissionsTest):
         Config().set(True, 'emissions', "include_emissions_details")
         set_old_consume_defaults()
 
-        emissions.Consume(fire_failure_manager).run(self.fires)
+        self._run_fires(emissions.Consume(), self.fires)
 
         assert self.fires[0]['error'] == (
             'Missing fuelbed data required for computing emissions')
@@ -1165,7 +1170,7 @@ class TestConsumeEmissions(BaseEmissionsTest):
         Config().set(['PM2.5', 'PM10'], 'emissions', "species")
         set_old_consume_defaults()
 
-        emissions.Consume(fire_failure_manager).run(self.fires)
+        self._run_fires(emissions.Consume(), self.fires)
 
         assert self.fires[0]['error'] == (
             'Missing fuelbed data required for computing emissions')
@@ -1180,10 +1185,113 @@ class TestConsumeEmissions(BaseEmissionsTest):
         Config().set(['PM2.5', 'PM10'], 'emissions', "species")
         set_old_consume_defaults()
 
-        emissions.Consume(fire_failure_manager).run(self.fires)
+        self._run_fires(emissions.Consume(), self.fires)
 
         assert self.fires[0]['error'] == (
             'Missing fuelbed data required for computing emissions')
         assert 'emissions_details' in self.fires[1]['activity'][0]['active_areas'][0]['specified_points'][0]['fuelbeds'][0]
         self._check_emissions(self.EXPECTED_FIRE1_EMISSIONS_PM_ONLY,
             self.fires[1]['activity'][0]['active_areas'][0]['specified_points'][0]['fuelbeds'][0]['emissions'])
+
+
+class TestPilesEmissions(BaseEmissionsTest):
+
+    def test_wo_details(self, reset_config):
+        Config().set("pile", 'emissions', "model")
+        Config().set(False, 'emissions', "include_emissions_details")
+
+        # expected_online_calc = {
+        #     "PM": 0.1813,
+        #     "PM10": 0.1283,
+        #     "PM2.5": 0.1118,
+        #     "CO": 0.6290,
+        #     "CO2": 27.5499,
+        #     "CH4": 0.0464,
+        #     "NMHC": 0.0375
+        # }
+        expected = {
+            "flaming": {
+                "CH4": [0.01901011643887843],
+                "CO": [0.3052051011193104],
+                "CO2": [19.874960821503258],
+                "NMHC": [0.020632931256831466],
+                "PM": [0.12692730183275536],
+                "PM10": [0.08983439170811452],
+                "PM2.5": [0.07824285729416426]
+            },
+            "residual": {
+                "CH4": [0.013698709777057649],
+                "CO": [0.16191303659428882],
+                "CO2": [3.837451984745181],
+                "NMHC": [0.008420421784991012],
+                "PM": [0.027198707535590436],
+                "PM10": [0.01925022679459597],
+                "PM2.5": [0.0167663265630352]
+            },
+            "smoldering": {
+                "CH4": [0.013698709777057649],
+                "CO": [0.16191303659428882],
+                "CO2": [3.837451984745181],
+                "NMHC": [0.008420421784991012],
+                "PM": [0.027198707535590436],
+                "PM10": [0.01925022679459597],
+                "PM2.5": [0.0167663265630352]
+            },
+            "total": {
+                "CH4": [0.04640753599299373],
+                "CO": [0.629031174307888],
+                "CO2": [27.549864790993617],
+                "NMHC": [0.037473774826813494],
+                "PM": [0.18132471690393626],
+                "PM10": [0.12833484529730646],
+                "PM2.5": [0.11177551042023466]
+            }
+        }
+
+        # Note that the location's "piles" section is used in consumption
+        # but not emissions.  It's included here for reference - to know
+        # what was used to get the fuel loadings and consumption values.
+        loc = {
+            "area": 12,
+            "lat": 46.0,
+            "lng": -121.0,
+            "fuelbeds": [
+                {
+                    "fuel_loadings": {
+                        "pile_clean_loading": 20.699168596339753,
+                        "pile_dirty_loading": 0.0,
+                        "pile_vdirty_loading": 0.0
+                    },
+                    "consumption": {
+                        "woody fuels": {
+                            "piles": {
+                                "flaming": [11.591534413950262],
+                                "residual": [2.4839002315607703],
+                                "smoldering": [2.4839002315607703],
+                                "total": [16.559334877071805]
+                            }
+                        }
+                    }
+                }
+            ],
+            "piles": [
+                {
+                    "pile_type": "Machine",
+                    "number_of_piles": 20,
+                    "shape": "HalfSphere",
+                    "h1": 5,
+                    "soil_percent": 10,
+                    "packing_ratio_percent": 25,
+                    "primary_species_density": 37.0,
+                    "primary_species_percent": 70,
+                    "secondary_species_density": 30.8,
+                    "secondary_species_percent": 30,
+                    "pile_quality": "Clean",
+                    "percent_consumed": 80
+                }
+            ]
+        }
+        emissions.Piles().run_on_location(None, None, loc)
+        for p in expected:
+            for s in expected[p]:
+                assert_approx_equal(loc['fuelbeds'][0]['emissions'][p][s.replace('PM2.5', 'PM25')][0], expected[p][s][0])

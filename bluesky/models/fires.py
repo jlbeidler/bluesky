@@ -8,6 +8,7 @@ import itertools
 import io
 import json
 import logging
+import subprocess
 import sys
 import traceback
 import urllib.request
@@ -207,6 +208,17 @@ class Fire(dict):
         else:
             super(Fire, self).__setattr__(attr, val)
 
+
+FLOAT_PREC = Config().get('floating_point_precision')
+
+def round_floats(obj):
+    if isinstance(obj, float):
+        return round(obj, FLOAT_PREC)
+    elif isinstance(obj, dict):
+        return {k: round_floats(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)) or hasattr(obj, 'tolist'):
+        return [round_floats(item) for item in obj]
+    return obj
 
 class FireEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -683,12 +695,35 @@ class FiresManager():
 
         try:
             input_stream = gzip.decompress(input_stream)
-            logging.info("Decompressed input")
+            logging.info("Decompressed input with gzip.compress")
         except Exception as e:
-            logging.debug("Failed to gzip.decompress %s: %s", input_file or '', e)
-            logging.info("input %s not gzip'd", input_file or '')
+            try:
+                logging.info("Failed to gzip.decompress %s: %s", input_file or '', e)
+                logging.info("Trying zcat (forked process)")
+                # call `subprocess.run` without `check=True` because there
+                # are cases where `zcat` returns error 1 with message
+                # 'unexpected end of file', but actually successfully
+                # decompresses and returns (to stdout) the complete output data.
+                result = subprocess.run(['zcat', input_file],
+                    capture_output=True, text=True)
 
-        input_stream = input_stream.decode()
+                # We can't rely on `result.returncode` (see comment above).
+                # So, check for data written to stdout. (If the input data
+                # is uncompressed, `result.stdout` will be an empty string.
+                if result.stdout:
+                    logging.info("Decompressed input with zcat")
+                    input_stream = result.stdout
+                else:
+                    logging.info("Failed to zcat %s", input_file or '')
+                    logging.info("Input %s does not appear to be gzip'd", input_file or '')
+            except Exception as eZcat:
+                logging.info("Failed to zcat %s: %s", input_file or '', eZcat)
+                logging.info("Input %s does not appear to be gzip'd", input_file or '')
+
+        # If the input was decompressed with zcat, then it will already
+        # be raw text, and thus not have the 'decode' method.
+        if hasattr(input_stream, 'decode'):
+            input_stream = input_stream.decode()
 
         try:
             data = json.loads(input_stream)
@@ -728,7 +763,9 @@ class FiresManager():
         if not output_stream:
             flag = 'wb' if compress else 'w'
             output_stream = self._stream(output_file, flag, compress=compress)
-        fire_json = json.dumps(self.dump(), sort_keys=True, cls=FireEncoder,
+        # TODO: py 3.13+ supposedly supports kwarg `round_floats`.
+        #   If so, use it once bluesky is upgraded to 26.06
+        fire_json = json.dumps(round_floats(self.dump()), sort_keys=True, cls=FireEncoder,
             indent=indent)
         if compress:
             fire_json = gzip.compress(fire_json.encode())

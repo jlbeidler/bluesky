@@ -735,3 +735,57 @@
 
 ## 4.6.16
  - updated feps_plumerise to check area within 10% instead of 1% of total
+
+## 4.6.17
+ - Update Prichard O'Neill emissions to check both the fuelbed object as well as the config for custom fuel loadings for piles
+
+## 4.6.18
+ - Upgrade to blueskykml==6.0.6
+
+## 4.6.19
+ - Add 'piles' emissions model
+
+## 4.6.20
+ - Fixed structure of 'piles' emissions output
+
+## 4.6.21
+ - Fixed piles specific logic in Prichard-O'Neill emissions
+
+## 4.6.22
+ - New process for transforming trajectories json into kml
+ - Dockerfile fixes
+
+## 4.6.23
+ - Run trajectories json-to-kml transformation in process
+
+## 4.6.24
+ - Add data checks in piles emissions logic
+
+## 4.6.25
+ - Try decompressing with zcat if gzip.decompress fails when loading input
+ - Create kmz instead of kml for hysplit trajectories
+
+## 4.6.26
+ - Round floating point values in bluesky output JSON data
+ - Update findmetdata to only fail if all of the time windows have no corresponding met files
+
+## 4.6.27
+ - Add higher resolution, 0.5 and 0.1 degree, dispersion and trajectory boundary files
+
+## 4.6.28
+ - add support for parthinning (dropping or sub-sampling particles at different mass thresholds)
+ - add support for initializing particles from sources other than pardump files (e.g. netcdf)
+ - add support for adaptive NUMPAR (scaling NUMPAR such that any given particle represents a fixed amount of mass)
+
+## 4.6.29
+ - don't load a location's shapefile if 'geometry' is already specified
+ - add support for generating geotiffs from hysplit output and optionally uploading them to s3
+
+## 4.6.30
+ - add support for generating 3hr, daily avg, and daily max geotiffs from hysplit output
+
+## 4.6.31
+ - create and upload metadata.json to go along with hysplit geotiffs
+
+## 4.6.32
+ - Add more geotiff info to visualization section of output

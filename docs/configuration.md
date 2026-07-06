@@ -46,6 +46,7 @@ configuration json data are case-insensitive.***
 
  - ***'config' > 'skip_failed_fires'*** -- *optional* -- exclude failed fire rather than abort entire run; default false; applies to various modules
  - ***'config' > 'skip_failed_sources'*** -- *optional* -- exclude failed sources rather than abort entire run; default false;  *Note: this may alternatively be defined under 'load'*
+ - ***'config' > 'floating_point_precision'*** -- *optional* -- default `6`
 
 ### input
 
@@ -226,6 +227,7 @@ They also define what synonyms to recognize, if any, for each field.
 ### emissions
 
  - ***'config' > 'emissions' > 'model'*** -- *optional* -- emissions model; 'prichard-oneill' (which replaced 'urbanski'), 'feps', or 'consume'; default 'prichard-oneill'
+ - ***'config' > 'emissions' > 'piles_model'*** -- *optional* -- emissions model to use for piles; 'prichard-oneill' (which replaced 'urbanski'), 'feps', 'consume', or 'piles'; defaults to what 'model' is set to
  - ***'config' > 'emissions' > 'species'*** -- *optional* -- list of species to compute emissions levels for
  - ***'config' > 'emissions' > 'include_emissions_details'*** -- *optional* -- whether or not to include emissions levels by fuel category; default: false
  - ***'config' > 'emissions' > 'include_emissions_factors'*** -- *optional* -- whether or not to include the emissions factors used for computing emissions in the output data; default: false
@@ -580,12 +582,23 @@ defined, it will look for 'boundary', 'spacing', and 'projection' in the top lev
  - ***'config' > 'visualization' > 'dispersion' > 'hysplit' > 'images_dir' -- *optional* -- sub-directory to contain images (relative to output direcotry); default is 'graphics/''
  - ***'config' > 'visualization' > 'dispersion' > 'hysplit' > 'data_dir' -- *optional* -- sub-directory to contain data files (relative to output direcotry); default is output directory root
  - ***'config' > 'visualization' > 'dispersion' > 'hysplit' > 'create_summary_json'*** -- *optional* -- default False
+ - ***'config' > 'visualization' > 'dispersion' > 'hysplit' > 'skip_blueskykml'*** -- *optional* -- default False
 
  - ***'config' > 'visualization' > 'dispersion' > 'hysplit' > 'blueskykml_config'*** -- *optional* -- contains configuration to pass directly into blueskykml; expected to be nested with top level section keys and second level option keys; see https://github.com/pnwairfire/blueskykml/ for configuration options
 
+ - ***'config' > 'visualization' > 'dispersion' > 'hysplit' > 'geotiffs' > 'enabled'*** -- *optional* -- enable generation of hourly PM2.5 geotiffs, in EPSG:4326
+ - ***'config' > 'visualization' > 'dispersion' > 'hysplit' > 'geotiffs' > 'output_dir'*** -- *optional* -- directory to store the geotiffs. Use `{vis_dir}` as a placeholder for the visualization output dir. Defaults to `"{vis_dir}/geotiffs"`.
+ - ***'config' > 'visualization' > 'dispersion' > 'hysplit' > 'geotiffs' > 'filename_templates' > 'hourly'*** -- *optional* -- hourly geotiff file name containing hour format directive (e.g. `{hour}` or `{hour:02d}`). Can contain subdirectories to be created under `output_dir` - e.g. `"hourly/{hour:03d}/pm2.5.tif"`; defaults to `"pm2.5-{hour:03d}.tif"`.
+ - ***'config' > 'visualization' > 'dispersion' > 'hysplit' > 'geotiffs' > 'filename_templates' > '3hr'*** -- *optional* -- 3hr average geotiff file name containing hour format directive (e.g. `{hour}` or `{hour:02d}`). Can contain subdirectories to be created under `output_dir` - e.g. `"hourly/{hour:03d}/pm2.5-3hr.tif"`; defaults to `"pm2.5-3hr-{hour:03d}.tif"`.
+ - ***'config' > 'visualization' > 'dispersion' > 'hysplit' > 'geotiffs' > 'filename_templates' > 'daily_avg'*** -- *optional* -- daily average geotiff file name containing day and timezone format directive (e.g. `{day:%Y%m%d%z}`). Can contain subdirectories to be created under `output_dir` - e.g. `"daily/{day:%Y-%m-%d%z}/pm2.5-daily-avg.tif"`; defaults to `"pm2.5-daily-avg-{day:%Y-%m-%d%z}.tif"`.
+ - ***'config' > 'visualization' > 'dispersion' > 'hysplit' > 'geotiffs' > 'filename_templates' > 'daily_max'*** -- *optional* -- daily maximum geotiff file name containing day and timezone format directive (e.g. `{day:%Y%m%d%z}`). Can contain subdirectories to be created under `output_dir` - e.g. `"daily/{day:%Y-%m-%d%z}/pm2.5-daily-max.tif"`; defaults to `"pm2.5-daily-max-{day:%Y-%m-%d%z}.tif"`.
+ - ***'config' > 'visualization' > 'dispersion' > 'hysplit' > 'geotiffs' > 'daily_utc_offsets'*** -- *optional* -- UTC offsets to create daily geotiffs for; defaults to `[-11,-10,-9,-8,-7,-6,-5,-4,0]`
+ - ***'config' > 'visualization' > 'dispersion' > 'hysplit' > 'geotiffs' > 's3' > 'bucket'*** -- *optional* -- s3 bucket to upload geotiffs to
+ - ***'config' > 'visualization' > 'dispersion' > 'hysplit' > 'geotiffs' > 's3' > 'key_prefix'*** -- *optional* -- key prefix to use when uploading geotiffs to s3.  The full key will be key_prefix + filename_template. As with any other config setting, use `{today}` as a placeholder for the run's date.
+
 #### if visualizing hysplit trajectories:
 
- - ***'config' > 'visualization' > 'trajectories' > 'hysplit' > 'kml_file_name'*** -- *optional* -- defaults to 'hysplit-trajectories.kml'
+ - ***'config' > 'visualization' > 'trajectories' > 'hysplit' > 'kmz_file_name'*** -- *optional* -- defaults to 'hysplit-trajectories.kmz'
 
 ### export
 

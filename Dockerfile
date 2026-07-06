@@ -94,6 +94,20 @@ COPY constraints.txt /tmp/bluesky/constraints.txt
 #      --extra-index https://pypi.airfire.org/simple/ \
 #      -r constraints.txt
 
+# Install consume tarball dirrectly because we get the following error
+# when installing from AirFire's pypi server (which we don't get with
+# other AirFire packages):
+#  ERROR: THESE PACKAGES DO NOT MATCH THE HASHES FROM THE REQUIREMENTS FILE. If you have updated the package versions, please update the hashes. Otherwise, examine the package contents carefully; someone may have tampered with them.
+#      fera-apps-consume==5.3.2 from https://pypi.airfire.org/packages/simple/fera-apps-consume/fera-apps-consume-5.3.2.tar.gz#sha256=4bdfa4bbf1604873bb2a424190d9eb5812a79a934499afdd240130431b6b3150:
+#          Expected sha256 4bdfa4bbf1604873bb2a424190d9eb5812a79a934499afdd240130431b6b3150
+#               Got        71de5472888d7b129c9ec35c6d621670ad8b7b78e0f6a869eb2976e706281578
+
+RUN wget https://pypi.airfire.org/packages/simple/apps-consume/apps-consume-5.3.1.tar.gz \
+    && pip3 install --break-system-packages \
+        --extra-index https://pypi.airfire.org/simple/ \
+        -f https://pypi.airfire.org/simple/ \
+        apps-consume-5.3.1.tar.gz
+
 # Install python dependencies
 COPY requirements-test.txt /tmp/bluesky/requirements-test.txt
 RUN pip3 install --break-system-packages -c constraints.txt -r requirements-test.txt
@@ -144,13 +158,14 @@ ARG GID=1000
 # We used to always add a new group, even if the GID was already used:
 #    RUN groupadd -g $GID -o $UNAME
 # Now we rename the group if GID already exists
-RUN if id -ng $GID; \
+RUN if getent group $GID; \
     then \
-        echo "Group $GID ($(id -ng $GID)) exists. Renaming as $UNAME"; \
-        groupmod -n $UNAME "$(id -ng $GID)"; \
+        echo "Group $GID ($(getent group $GID | cut -d: -f1)) exists. Renaming as $UNAME"; \
+        groupmod -n $UNAME "$(getent group $GID | cut -d: -f1)"; \
     else \
         groupadd -g $GID $UNAME; fi
 
+# TODO: set home directory to /home/bluesky/
 # Similarly, we used to always add a new user, even if the UID was already used:
 #    RUN useradd -m -u $UID -g $GID -s /bin/bash -o $UNAME
 # Now we rename the user if UID already exists
