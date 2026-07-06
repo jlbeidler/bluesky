@@ -28,6 +28,7 @@ __all__ = [
 __version__ = "0.1.0"
 
 
+FCCS_FUEL_LOADINGS = Config().get('consumption', 'fccs_fuel_loadings')
 SUMMARIZE_FUEL_LOADINGS = Config().get('consumption', 'summarize_fuel_loadings')
 LOADINGS_KEY_MATCHER = re.compile('.*_loading')
 
@@ -46,10 +47,11 @@ def run(fires_manager):
     fires_manager.processed(__name__, __version__,
         consume_version=CONSUME_VERSION_STR)
 
+    model = Config().get('consumption', 'model')
     all_fuel_loadings = Config().get('consumption', 'fuel_loadings')
     fuel_loadings_manager = FuelLoadingsManager(all_fuel_loadings=all_fuel_loadings)
 
-    _validate_input(fires_manager)
+    _validate_input(fires_manager, model)
 
     if model == 'crops':
         crops = CropConsumption()
@@ -66,74 +68,77 @@ def run(fires_manager):
 
     datautils.summarize_all_levels(fires_manager, 'consumption')
     datautils.summarize_all_levels(fires_manager, 'heat')
+    if SUMMARIZE_FUEL_LOADINGS:
+        datautils.summarize_all_levels(fires_manager, 'fuel_loadings',
+            data_key_matcher=LOADINGS_KEY_MATCHER)
 
-    class CropConsumption:
+class CropConsumption:
 
-        def __init__(self):
-            # Crop loadings in tons/acre
-            self.LOADINGS = {'1': 4.2, '2': 1.9, '3': 2.5, '4': 2.18, '6': 2.18, '7': 3, '8': 4.75,
-              '9': 2.94, '12': 1.9, '13': 3.05, '14': 2.04, '15': 2.34, '16': 3.35, '17': 2.2,
-              '25': 1.9, '26': 1.9}
+    def __init__(self):
+        # Crop loadings in tons/acre
+        self.LOADINGS = {'1': 4.2, '2': 1.9, '3': 2.5, '4': 2.18, '6': 2.18, '7': 3, '8': 4.75,
+          '9': 2.94, '12': 1.9, '13': 3.05, '14': 2.04, '15': 2.34, '16': 3.35, '17': 2.2,
+          '25': 1.9, '26': 1.9}
 
-            # Combustion efficiencies as %
-            self.CEFFS = {'1': 0.75, '2': 0.85, '3': 0.75, '4': 0.65, '6': 0.75, '7': 0.75, '8': 0.65,
-              '9': 0.75, '12': 0.85, '13': 0.8, '14': 0.75, '15': 0.7, '16': 0.75, '17': 0.8,
-              '25': 0.85, '26': 0.85}
+        # Combustion efficiencies as %
+        self.CEFFS = {'1': 0.75, '2': 0.85, '3': 0.75, '4': 0.65, '6': 0.75, '7': 0.75, '8': 0.65,
+          '9': 0.75, '12': 0.85, '13': 0.8, '14': 0.75, '15': 0.7, '16': 0.75, '17': 0.8,
+          '25': 0.85, '26': 0.85}
 
-            self.CDL_CROP_MAP = {'1': '1', '12': '1', '13': '1', '226': '1', '237': '1', # Corn
-              '22': '2', '23': '2', '24': '2', '230': '2', '234': '2', '236': '2', # Wheat
-              '5': '3', '52': '3', '240': '3', '254': '3', # Soy
-              '2': '4', '232': '4', # Cotton
-              '3': '7', # Rice
-              '45': '8', # Sugarcane
-              '225': '13', # Winterwheat/Corn
-              '238': '14', # Winterwheat/Cotton
-              '239': '15', # Soybean/Cotton
-              '241': '16', # Corn/Soy
-              '26': '17', # Winterwheat/Soy
-              '37': '25', '61': '25', '176': '25', '256': '25' # Grass/Pasture
-            }
+        self.CDL_CROP_MAP = {'1': '1', '12': '1', '13': '1', '226': '1', '237': '1', # Corn
+          '22': '2', '23': '2', '24': '2', '230': '2', '234': '2', '236': '2', # Wheat
+          '5': '3', '52': '3', '240': '3', '254': '3', # Soy
+          '2': '4', '232': '4', # Cotton
+          '3': '7', # Rice
+          '45': '8', # Sugarcane
+          '225': '13', # Winterwheat/Corn
+          '238': '14', # Winterwheat/Cotton
+          '239': '15', # Soybean/Cotton
+          '241': '16', # Corn/Soy
+          '26': '17', # Winterwheat/Soy
+          '37': '25', '61': '25', '176': '25', '256': '25' # Grass/Pasture
+        }
 
-            self.FCCS_CROP_MAP = {'1281': '25', '131': '25', '133': '25', '175': '25', '176': '25', '203': '25',
-              '213': '25', '236': '25', '280': '25', '302': '25', '315': '25', '318': '25', '336': '25',
-              '41': '25', '415': '25', '417': '25', '420': '25', '435': '25', '436': '25', '437': '25',
-              '442': '25', '443': '25', '445': '25', '453': '25', '506': '25', '514': '25', '519': '25',
-              '530': '25', '531': '25', '532': '25', '533': '25', '57': '25', '65': '25', '66': '25',
-              '1261': '25', # Grass/Pasture
-              '1203': '7', # Rice
-              '1223': '2' # Wheat
-             }
+        self.FCCS_CROP_MAP = {'1281': '25', '131': '25', '133': '25', '175': '25', '176': '25', '203': '25',
+          '213': '25', '236': '25', '280': '25', '302': '25', '315': '25', '318': '25', '336': '25',
+          '41': '25', '415': '25', '417': '25', '420': '25', '435': '25', '436': '25', '437': '25',
+          '442': '25', '443': '25', '445': '25', '453': '25', '506': '25', '514': '25', '519': '25',
+          '530': '25', '531': '25', '532': '25', '533': '25', '57': '25', '65': '25', '66': '25',
+          '1261': '25', # Grass/Pasture
+          '1203': '7', # Rice
+          '1223': '2' # Wheat
+         }
 
-        def _run_fire(self, fire, fuel_loadings_manager, msg_level):
-            logging.debug("Crop consumption - fire {}".format(fire.id))
+    def _run_fire(self, fire, fuel_loadings_manager, msg_level):
+        logging.debug("Crop consumption - fire {}".format(fire.id))
 
-            fire_type = fire.type
-            for ac in fire['activity']:
-                for aa in ac.active_areas:
-                    for loc in aa.locations:
-                        for fb in loc['fuelbeds']:
-                            self._run_fuelbed(fb, loc['area'])
+        fire_type = fire.type
+        for ac in fire['activity']:
+            for aa in ac.active_areas:
+                for loc in aa.locations:
+                    for fb in loc['fuelbeds']:
+                        self._run_fuelbed(fb, loc['area'])
 
-        def _run_fuelbed(self, fb, area):
-            if int(fb['fccs_id']) > 9000:
-                try:
-                   crop_fuelbed_id = self.CDL_CROP_MAP[str(int(fb['fccs_id'])-9000)]
-                except KeyError:
-                    crop_fuelbed_id = '12'
-            else:
-                try:
-                    crop_fuelbed_id = self.FCCS_CROP_MAP[str(int(fb['fccs_id']))]
-                except KeyError:
-                    crop_fuelbed_id = '12'
-            # Lookup the crop bed, select the "other crops" type if it isn't found 
-            loading = self.LOADINGS[crop_fuelbed_id]
-            ceff = self.CEFFS[crop_fuelbed_id]
-            fb['fuel_loadings'] = {'Total_available_fuel_loading': loading}
-            area = (fb['pct'] / 100.0) * area
-            consumption = loading * area * ceff
-            fb['consumption'] = {'crop_residue': {'crop_residue': {'flaming': [consumption], 'smoldering': [0], 'residual': [0]}}}
-            heat = consumption * 2000 * 8000
-            fb['heat'] = {'flaming': [heat], 'smoldering': [0], 'residual': [0], 'total': [heat]}
+    def _run_fuelbed(self, fb, area):
+        if int(fb['fccs_id']) > 9000:
+            try:
+               crop_fuelbed_id = self.CDL_CROP_MAP[str(int(fb['fccs_id'])-9000)]
+            except KeyError:
+                crop_fuelbed_id = '12'
+        else:
+            try:
+                crop_fuelbed_id = self.FCCS_CROP_MAP[str(int(fb['fccs_id']))]
+            except KeyError:
+                crop_fuelbed_id = '12'
+        # Lookup the crop bed, select the "other crops" type if it isn't found 
+        loading = self.LOADINGS[crop_fuelbed_id]
+        ceff = self.CEFFS[crop_fuelbed_id]
+        fb['fuel_loadings'] = {'Total_available_fuel_loading': loading}
+        area = (fb['pct'] / 100.0) * area
+        consumption = loading * area * ceff
+        fb['consumption'] = {'crop_residue': {'crop_residue': {'flaming': [consumption], 'smoldering': [0], 'residual': [0]}}}
+        heat = consumption * 2000 * 8000
+        fb['heat'] = {'flaming': [heat], 'smoldering': [0], 'residual': [0], 'total': [heat]}
 
     if SUMMARIZE_FUEL_LOADINGS:
         datautils.summarize_all_levels(fires_manager, 'fuel_loadings',
@@ -322,9 +327,11 @@ def get_piles_fuel_loadings_manager(loc):
 
 def _run_fuelbed(fb, location, fuel_loadings_manager, season,
         burn_type, fire_type):
+    # Hierarchy of most to least specific
     fuel_loadings_csv_filename = fuel_loadings_manager.generate_custom_csv(
         fb['fccs_id'])
-
+    if fuel_loadings_csv_filename.strip() == '' and FCCS_FUEL_LOADINGS.strip() != '':
+        fuel_loadings_csv_filename = FCCS_FUEL_LOADINGS
     fc = consume.FuelConsumption(
         fccs_file=fuel_loadings_csv_filename,
         msg_level=logging.root.level)
@@ -381,11 +388,11 @@ VALIDATION_ERROR_MSGS = {
     'NO_LOCATIONS': "Active area missing location data required for computing consumption",
     'NO_FUELBEDS': "Active area location missing fuelbeds data required for computing consumption",
     'AREA_UNDEFINED': "Fire activity location data must define area for computing consumption",
-    'ECOREGION_REQUIED': 'Fire activity location data must define ecoregion for computing consumption. Run the ecoregion module first.',
+    'ECOREGION_REQUIRED': 'Fire activity location data must define ecoregion for computing consumption. Run the ecoregion module first.',
     'FCCS_ID_AND_PCT_REQUIRED': "Each fuelbed must define 'fccs_id' and 'pct'"
 }
 
-def _validate_input(fires_manager):
+def _validate_input(fires_manager, model):
     ecoregion_lookup = None # instantiate only if necessary
     for fire in fires_manager.fires:
         with fires_manager.fire_failure_handler(fire):
@@ -407,7 +414,7 @@ def _validate_input(fires_manager):
                         raise ValueError(VALIDATION_ERROR_MSGS["AREA_UNDEFINED"])
 
                     if not loc.get('ecoregion') and model != 'crops':
-                        raise ValueError(VALIDATION_ERROR_MSGS["ECOREGION_REQUIED"])
+                        raise ValueError(VALIDATION_ERROR_MSGS["ECOREGION_REQUIRED"])
 
                     for fb in loc['fuelbeds'] :
                         # make sure that FCCS id is defined and that pct is defined and non-zero

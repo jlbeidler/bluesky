@@ -132,7 +132,9 @@ _DEFAULTS = {
         }
     },
     "consumption": {
+        "model": "consume",
         "fuel_loadings": {},
+        "fccss_fuel_loadings": "",
         "scale_with_estimated_fuelload": False,
         "scale_with_estimated_consumption": False,
         "summarize_fuel_loadings": False,
@@ -227,7 +229,7 @@ _DEFAULTS = {
                         'wf': 0,
                         'other': 0,
                     },
-                    # TDOO: is 'canopy' a valid synonym
+                    'synonyms': ['canopy']
                 },
                 'shrub_blackened_pct': {
                     'defaults': {
@@ -246,23 +248,23 @@ _DEFAULTS = {
                 },
                 'duff_pct_available': {
                     'defaults': {
-                        'rx': 5,
-                        'wf': 10,
-                        'other': 10,
+                        'rx': 50,
+                        'wf': 100,
+                        'other': 100,
                     },
                 },
                 'sound_cwd_pct_available': {
                     'defaults': {
-                        'rx': 5,
-                        'wf': 10,
-                        'other': 10,
+                        'rx': 50,
+                        'wf': 100,
+                        'other': 100,
                     },
                 },
                 'rotten_cwd_pct_available': {
                     'defaults': {
-                        'rx': 5,
-                        'wf': 10,
-                        'other': 10,
+                        'rx': 50,
+                        'wf': 100,
+                        'other': 100,
                     },
                 }
             }
@@ -516,7 +518,7 @@ _DEFAULTS = {
             "ASCDATA_FILE": os.path.join(_HYSPLIT_DISP_BDYFILES_PATH, 'ASCDATA.CFG'),
             "LANDUSE_FILE": os.path.join(_HYSPLIT_DISP_BDYFILES_PATH, 'LANDUSE.ASC'),
             "ROUGLEN_FILE": os.path.join(_HYSPLIT_DISP_BDYFILES_PATH, 'ROUGLEN.ASC'),
-            "TERRAIN_FILE": os.path.join(_HYSPLIT_DISP_BDYFILES_PATH, 'TERRAIN.ASC'),
+
 
             ## Other
 
@@ -616,22 +618,6 @@ _DEFAULTS = {
             # The repeat interval at which the particle initialization file will be
             # written after NDUMP
             "NCYCL": 0, # TODO: should this be 24 ?
-
-            # Particle thinning applied to PARINIT before HYSPLIT reads it.
-            # See bluesky.dispersers.hysplit.parthin.
-            # 'min_mass_grams' and 'thin_bins' are mutually exclusive.
-            "parthin": {
-                "enabled": False,
-                # Drop particles with total mass below this value (grams).
-                "min_mass_grams": None,
-                # List of [upper_mass_grams, thin_rate] pairs, ascending and
-                # non-overlapping. Particles in range [prev_upper, upper) are
-                # removed at the thin_rate. Particles above the
-                # highest upper bound are always kept.
-                "thin_bins": None,
-                # Archive the thinned PARINIT to the run output directory.
-                "keep_parinit": False,
-            },
 
             ## ADVANCED Setup variable options
 
@@ -894,7 +880,6 @@ _DEFAULTS = {
                 "images_dir": None,
                 "data_dir": "",
                 "create_summary_json": False,
-                "skip_blueskykml": False,
                 "blueskykml_config": {
                     'SmokeDispersionKMLInput': {
                         # Use google's fire icon instead of BlueSkyKml's built-in icon
@@ -911,26 +896,7 @@ _DEFAULTS = {
 
                 # The following default is defined in the blueskykml package,
                 # but we need to define it here so that the code doesn't fail
-                "layers": [0],
-
-                "geotiffs": {
-                    "enabled": False,
-                    # Split the file pathname into output_dir and filename_template
-                    # anyway you want.  If uploading to s3, the full s3 key will
-                    # reflect filename_template.
-                    "output_dir": "{vis_dir}/geotiffs",
-                    "filename_templates": {
-                        "hourly": "pm2.5-{hour:03d}.tif",
-                        "3hr": "pm2.5-3hr-{hour:03d}.tif",
-                        "daily_avg": "pm2.5-daily-avg-{day:%Y-%m-%d%z}.tif",
-                        "daily_max": "pm2.5-daily-max-{day:%Y-%m-%d%z}.tif",
-                    },
-                    "daily_utc_offsets": [-11,-10,-9,-8,-7,-6,-5,-4,0],
-                    "s3": {
-                        "bucket": None,
-                        "key_prefix": None
-                    }
-                }
+                "layers": [0]
             }
         }
     },

@@ -48,7 +48,6 @@ LOCATION_FIELDS = [
     ("state", "state", lambda val: val),
     ("county", "county", lambda val: val),
     ("country", "country", lambda val: val),
-    ("cover_code", "fccs_id", lambda val: val),
     # required float fields
     ("latitude", "lat", lambda val: float(val)),
     ("longitude", "lng", lambda val: float(val)),
@@ -68,6 +67,7 @@ LOCATION_FIELDS = [
     ("moisture_live", "moisture_live", get_optional_float),
     ("moisture_duff", "moisture_duff", get_optional_float),
     ("moisture_litter", "moisture_litter", get_optional_float),
+    ("canopy", "canopy", get_optional_float),
     ("min_wind", "min_wind", get_optional_float),
     ("max_wind", "max_wind", get_optional_float),
     ("min_wind_aloft", "min_wind_aloft", get_optional_float),
@@ -136,7 +136,6 @@ class CsvFileLoader(BaseCsvFileLoader):
         self._load_timeprofile_file()
 
         fires = {}
-        self._fuelbeds = {}
         self._consumption_values = {}
         self._emissions_values = {}
         self._moisture_values = {}
@@ -230,23 +229,17 @@ class CsvFileLoader(BaseCsvFileLoader):
             fire["event_of"]["url"] = row["event_url"]
         if row.get("event_name"):
             fire["event_of"]["name"] = row["event_name"]
-
         if row.get("type"):
             fire["type"] = row["type"].lower()
-
-        if sp['fccs_id'] not in (None, ''):
-            self._fuelbeds[fire['id']] = sp['fccs_id']
 
         self._process_consumption_values(row, fire, sp)
         self._process_emissions_values(row, fire, sp)
         self._process_moisture_values(row, fire, sp)
-
         # TODO: other marshaling
-
         return fire
 
     def _process_moisture_values(self, row, fire, sp):
-        fm_map = {'moisture_1khr': '1000_hr', 'moisture_duff': 'duff', 'moisture_litter': 'litter'} 
+        fm_map = {'moisture_1khr': '1000_hr', 'moisture_duff': 'duff', 'moisture_litter': 'litter', 'canopy': 'canopy_consumption_pct'}
         if self._load_moisture:
             self._moisture_values[fire['id']] = {}
             for col, f in fm_map.items():
@@ -338,18 +331,6 @@ class CsvFileLoader(BaseCsvFileLoader):
                 })
                 if event_id and (start in self._timeprofile[event_id]):
                     fire['activity'][-1]["active_areas"][0]["timeprofile"] = self._timeprofile[event_id][start]
-
-        # Set the FCCS ID from the CSV file for the entire location
-        if fire['id'] in self._fuelbeds:
-            sp = fire['activity'][-1]['active_areas'][0]['specified_points'][-1]
-            sp['fuelbeds'] = [{}]
-            sp['fuelbeds'][0]['fccs_id'] = self._fuelbeds[fire['id']]
-            sp['fuelbeds'][0]['pct'] = 100
-
-        # For fuel moisture. Assumes same FM for entire fire location.
-        if fire['id'] in self._moisture_values:
-            sp = fire['activity'][-1]['active_areas'][0]['specified_points'][-1]
-            sp['fuelmoisture'] = self._moisture_values[fire['id']]    
 
         # Again this is for the Canadian addition. Assumes one location per fire.
         if (fire["id"] in self._consumption_values

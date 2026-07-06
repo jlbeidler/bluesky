@@ -74,6 +74,8 @@ def run(fires_manager):
                         datautils.summarize_all_levels(fires_manager, 'consumption')
                     if source.get("load_emissions"):
                         datautils.summarize_all_levels(fires_manager, 'emissions')
+                    if source.get("load_moisture"):
+                        datautils.summarize_all_levels(fires_manager, 'fuelmoisture')
                 successfully_loaded_sources.append(source)
             except:
                 # Let skip_failed_sources be defined at top level
