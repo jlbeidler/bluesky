@@ -278,6 +278,8 @@ _DEFAULTS = {
         "include_emissions_factors": False,
         "species": [],
         "fuel_loadings": {},
+        # Fuelbed region for code lookup -- essentially getting globalFCCS prefix
+        "fuelbed_region": "",
         "ubc-bsf-feps": {
             "working_dir": None,
             "delete_working_dir_if_no_error": True

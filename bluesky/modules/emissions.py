@@ -268,6 +268,8 @@ class PrichardOneill(EmissionsBase):
         self.fuel_loadings_manager = FuelLoadingsManager(
             all_fuel_loadings=all_fuel_loadings)
 
+        self.fuelbed_region = Config().get('emissions','fuelbed_region')
+
     # Consumption values are in tons, Prichard/ONeill EFS are in g/kg, and
     # we want emissions values in tons.  Since 1 g/kg == 2 lbs/ton, we need
     # to multiple the emissions output by:
@@ -383,7 +385,7 @@ class PrichardOneill(EmissionsBase):
 
 
     def _get_lookup_object(self, fire, fuelbed):
-        return Fccs2SeraEf(fuelbed["fccs_id"], is_rx=(fire["type"]=="rx"))
+        return Fccs2SeraEf(fuelbed["fccs_id"], fuelbed_region=self.fuelbed_region, is_rx=(fire["type"]=="rx"))
 
 
 ##
@@ -393,7 +395,7 @@ class PrichardOneill(EmissionsBase):
 class Urbanski(PrichardOneill):
 
     def _get_lookup_object(self, fire, fuelbed):
-        return Fccs2Ef(fuelbed["fccs_id"], is_rx=(fire["type"]=="rx"))
+        return Fccs2Ef(fuelbed["fccs_id"], fuelbed_region=self.fuelbed_region, is_rx=(fire["type"]=="rx"))
 
 
 ##
